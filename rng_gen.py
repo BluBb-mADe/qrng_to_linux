@@ -10,13 +10,13 @@ import socket
 import struct
 import logging
 
-
 uname = "yourusername"
 passwd = "yourpassword"
 
-exit_ = []
 chunk_size = 768
-bin_chunk = struct.pack("ii", chunk_size, chunk_size)
+chunk_header = struct.pack("ii", chunk_size, chunk_size)
+
+exit_ = []
 
 
 def handler(_, __):
@@ -24,10 +24,10 @@ def handler(_, __):
     logging.info("exiting...")
 
 
-def recv_at_least(s, num):
+def recv_at_least(sock, num):
     data = b''
     while len(data) < num:
-        data += s.recv(1024*4)
+        data += sock.recv(1024*4)
     return data
 
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 logging.warning(f"invalid random data '{rdata[:64]}'")
                 continue
             try:
-                fcntl.ioctl(fr, 0x40085203, bin_chunk + rdata)
+                fcntl.ioctl(fr, 0x40085203, chunk_header + rdata)
                 logging.debug(f"{chunk_size} bytes of entropy added")
             except ValueError:
                 logging.exception("entropy writing failed")
